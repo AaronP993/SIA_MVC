@@ -1,0 +1,132 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account</title>
+    <style>
+        /* Include your CSS styles here or link an external stylesheet */
+        body {
+            background-color: #000;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to right, #0e0e0e, #2a2a2a);
+            font-family: Arial, sans-serif;
+        }
+
+        .form-box {
+            background-color: #1e1e1e;
+            padding: 30px 40px;
+            border: 2px solid #007fff;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            color: white;
+        }
+
+            .form-box h2 {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            .form-box label {
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .form-box input[type="text"],
+            .form-box input[type="password"] {
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 20px;
+                border-radius: 5px;
+                border: none;
+                background: #333;
+                color: white;
+            }
+
+            .form-box input[type="radio"] {
+                margin-right: 10px;
+            }
+
+        .submit-btn {
+            background: #c20c0c;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+            .submit-btn:hover {
+                background: #a00b0b;
+            }
+
+        .alert {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .alert-success {
+            background-color: #1e7e34;
+            color: white;
+        }
+
+        .alert-error {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-box">
+        <h2>Create Account</h2>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-error">@TempData["Error"]</div>
+        }
+
+        @using (Html.BeginForm("CreateAccount", "Account", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+
+            <div>
+                @Html.LabelFor(m => m.Username)
+                @Html.TextBoxFor(m => m.Username, new { @class = "form-control", placeholder = "Enter username" })
+                @Html.ValidationMessageFor(m => m.Username, "", new { @class = "text-danger" })
+            </div>
+
+            <div>
+                @Html.LabelFor(m => m.Password)
+                @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Enter password" })
+                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
+            </div>
+
+            <div>
+                <label>Role:</label>
+                <div>
+                    <label>@Html.RadioButtonFor(m => m.Role, "admin") Admin</label>
+                    <label>@Html.RadioButtonFor(m => m.Role, "purchasing") Purchasing</label>
+                    <label>@Html.RadioButtonFor(m => m.Role, "inventory") Inventory</label>
+                </div>
+                @Html.ValidationMessageFor(m => m.Role, "", new { @class = "text-danger" })
+            </div>
+
+            <div>
+                <button type="submit" class="submit-btn">Create Account</button>
+            </div>
+        }
+    </div>
+</body>
+</html>
