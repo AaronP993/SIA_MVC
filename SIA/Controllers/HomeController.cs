@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Mvc;
+using System.Web.UI.WebControls;
 
 namespace SIA.Controllers
 {
@@ -39,44 +40,41 @@ namespace SIA.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult CreateAccount(AccountViewModel model)
         {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                   // Call the stored procedure to create a new user
-                   string hashedPassword = HashPassword(model.Password); // Hash the password
-                    
-                   using (SqlConnection connection = new SqlConnection(dbConnect))
-                    {
-                        connection.Open();
-
-                        using (SqlCommand command = new SqlCommand("CreateAccount", connection))
-                        {
-                            command.CommandType = CommandType.StoredProcedure;
-
-                            //Add parameters to the command
-                            command.Parameters.AddWithValue("@USERNAME", model.Username);
-                            command.Parameters.AddWithValue("@PASSWORD", hashedPassword);
-                            command.Parameters.AddWithValue("@PASSWORD", model.FirstName);
-                            command.Parameters.AddWithValue("@PASSWORD", model.LastName);
-                            command.Parameters.AddWithValue("@PASSWORD", model.Role);
-
-                            //Execute the Command
-                            command.ExecuteNonQuery();
-                        }
-                    }
-
-                    TempData["Success"] = "Account created successfully!";
-                    return RedirectToAction("CreateAccount");
-                }
-                catch (Exception ex)
-                {
-                    TempData["Error"] = "An error occurred while creating the account: " + ex.Message;
-                }
-            }
-            else
+            //Raise error early if modelstate is invalid
+            if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Please contact the IT Support to fix the errors.";
+                return View(model);
+            }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(dbConnect))
+                {
+                    connection.Open();
+
+                    using (SqlCommand command = new SqlCommand("CreateAccount", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        //Add parameters to the command
+                        command.Parameters.AddWithValue("@USERNAME", model.Username);
+                        command.Parameters.AddWithValue("@PASSWORD", model.Password);
+                        command.Parameters.AddWithValue("@FIRSTNAME", model.FirstName);
+                        command.Parameters.AddWithValue("@LASTNAME", model.LastName);
+                        command.Parameters.AddWithValue("@ROLE", model.Role);
+
+                        //Execute the Command
+                        command.ExecuteNonQuery();
+                    }
+                }
+
+                TempData["Success"] = "Account created successfully!";
+                return RedirectToAction("CreateAccount");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "An error occurred while creating the account: " + ex.Message;
             }
 
             return View(model);
@@ -99,18 +97,17 @@ namespace SIA.Controllers
 
             try
             {
-                string hashedPassword = HashPassword(password);
-
                 using (SqlConnection connection = new SqlConnection(dbConnect))
                 {
                     connection.Open();
 
+                    //Rename the stored procedure to match the actual name in the database
                     using (SqlCommand command = new SqlCommand("*LogIn SP name*", connection))
                     {
                         command.CommandType = CommandType.StoredProcedure;
 
                         command.Parameters.AddWithValue("@USERNAME", username);
-                        command.Parameters.AddWithValue("@PASSWORD", hashedPassword);
+                        command.Parameters.AddWithValue("@PASSWORD", password);
 
                         using (SqlDataReader reader = command.ExecuteReader())
                         {
@@ -118,10 +115,21 @@ namespace SIA.Controllers
                             {
                                 reader.Read();
                                 Session["Username"] = reader["Username"].ToString();
-                                Session["Role"] = reader["Role"].ToString();
-                                
-                                //Create trap to check roles to redirect
+                                string role = reader["Role"].ToString();
+                                Session["Role"] = role;
+
+                                //Trappings to check roles to redirect
                                 //the user to the page they can access
+                                switch (role)
+                                {
+                                    case "Admin":
+                                        return RedirectToAction("AdminAccounts", "Admin");
+                                    case "Purchasing":
+                                        return RedirectToAction("Purchasing", "Purchasing");
+                                    case "Inventory":
+                                        return RedirectToAction("Inventory", "Inventory");
+                                    //Default is omitted since the database will only return these three roles
+                                }
                             }
                             else
                             {
@@ -154,13 +162,6 @@ namespace SIA.Controllers
         {
             Session.Clear();
             return RedirectToAction("Login");
-        }
-
-        // Placeholder for password hashing
-        private string HashPassword(string password)
-        {
-            // Implement a secure password hashing mechanism
-            return password;//Placeholder
         }
 
         protected override void Dispose(bool disposing)
